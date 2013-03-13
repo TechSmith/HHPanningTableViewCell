@@ -102,14 +102,15 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
 
 - (void)panningTableViewCellInit
 {
-	self.containerView = [self createContainerView];
-	self.shadowView = [self createShadowView];
-	self.panGestureRecognizer = [self createPanGesureRecognizer];
+    self.containerView = [self createContainerView];
+    self.shadowView = [self createShadowView];
+    self.panGestureRecognizer = [self createPanGesureRecognizer];
 
-	[self addGestureRecognizer:self.panGestureRecognizer];
+    [self addGestureRecognizer:self.panGestureRecognizer];
 
-	self.directionMask = 0;
-	self.shouldBounce = YES;
+    self.directionMask = 0;
+    self.shouldBounce = YES;
+    self.removesOnSlide = YES;
 
     self.minimumPan = HH_PANNING_MINIMUM_PAN;
     self.maximumPan = HH_PANNING_MAXIMUM_PAN;
@@ -294,21 +295,26 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
 	[cellView addSubview:containerView];
 
 	if (revealed) {
+      CGFloat revealAmount = self.maximumPan == 0 ? bounds.size.width : self.maximumPan;
+      
 		if (direction == HHPanningTableViewCellDirectionRight) {
-			frame.origin.x = bounds.origin.x + bounds.size.width;
+			frame.origin.x = bounds.origin.x + revealAmount;
 		}
 		else {
-			frame.origin.x = bounds.origin.x - bounds.size.width;
+			frame.origin.x = bounds.origin.x - revealAmount;
 		}
 
 		self.animationInProgress = YES;
 
         void (^animations)(void) = ^ {
-            [containerView setFrame:frame];
+           [containerView setFrame:frame];
         };
 
         void (^completion)(BOOL finished) = ^(BOOL finished) {
-            [containerView removeFromSuperview];
+           if(self.removesOnSlide)
+           {
+              [containerView removeFromSuperview];
+           }
 
             self.animationInProgress = NO;
         };
@@ -335,8 +341,8 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
         self.animationInProgress = YES;
 
         void (^completion)(BOOL finished) = ^(BOOL finished) {
-            [drawerView removeFromSuperview];
-            [shadowView removeFromSuperview];
+           [drawerView removeFromSuperview];
+           [shadowView removeFromSuperview];
 
             self.animationInProgress = NO;
         };
@@ -436,11 +442,12 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
 		UIView *containerView = self.containerView;
 
 		[self addSubview:drawerView];
-		[self addSubview:shadowView];
-		[self addSubview:containerView];
-		[self setSelected:NO];
+      [self addSubview:shadowView];
+      [self addSubview:containerView];
+      [self setSelected:NO];
 
 		self.panOriginX = containerView.frame.origin.x;
+
 		self.panning = NO;
 	}
 	else if (state == UIGestureRecognizerStateChanged) {
@@ -460,13 +467,13 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
 		CGRect containerViewFrame = [containerView frame];
 
 		containerViewFrame.origin.x = self.panOriginX + totalPanX;
-
-        CGFloat maximumPan = self.maximumPan;
-        CGFloat width = (maximumPan > 0.0f) ? maximumPan : self.bounds.size.width;
+      
+      CGFloat maximumPan = self.maximumPan;
+      CGFloat width = (maximumPan > 0.0f) ? maximumPan : self.bounds.size.width;
 		NSInteger directionMask = self.directionMask;
 		CGFloat leftLimit = (directionMask & HHPanningTableViewCellDirectionLeft) ? (-1.0 * width) : 0.0f;
 		CGFloat rightLimit = (directionMask & HHPanningTableViewCellDirectionRight) ? width : 0.0f;
-
+      
 		if (containerViewFrame.origin.x <= leftLimit) {
 			containerViewFrame.origin.x = leftLimit;
 		}
@@ -553,20 +560,22 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
         containerFrame.size.width = cellBounds.size.width;
 
 		if (self.drawerRevealed) {
+         
+         CGFloat revealAmount = self.maximumPan == 0 ? cellBounds.size.width : self.maximumPan;
 			if (containerFrame.origin.x > cellBounds.origin.x) {
-				containerFrame.origin.x = cellBounds.origin.x + cellBounds.size.width;
+				containerFrame.origin.x = cellBounds.origin.x + revealAmount;
 			}
 			else {
-				containerFrame.origin.x = cellBounds.origin.x - cellBounds.size.width;
-			}
+				containerFrame.origin.x = cellBounds.origin.x - revealAmount;
+         }
 
-			[containerView setFrame:containerFrame];
-
+         [containerView setFrame:containerFrame];
+         
 			[containerView addSubview:backgroundView];
 			[containerView addSubview:accessoryView];
 			[containerView addSubview:contentView];
 
-			[self insertSubview:drawerView belowSubview:containerView];
+         [self insertSubview:drawerView belowSubview:containerView];
 			[self insertSubview:shadowView aboveSubview:drawerView];
 		}
 		else {
@@ -575,7 +584,7 @@ static HHPanningTableViewCellDirection HHOppositeDirection(HHPanningTableViewCel
 			[containerView addSubview:accessoryView];
 			[containerView addSubview:contentView];
 
-			[self addSubview:containerView];
+         [self addSubview:containerView];
 		}
 	}
 

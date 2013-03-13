@@ -47,10 +47,11 @@ typedef enum {
 @property (nonatomic, strong)	IBOutlet	UIView*								drawerView;
 
 @property (nonatomic, assign)				NSInteger							directionMask;
-@property (nonatomic, assign)				BOOL								shouldBounce;
+@property (nonatomic, assign)				BOOL								   shouldBounce;
+@property (nonatomic, assign)          BOOL                          removesOnSlide;
 @property (nonatomic, assign)				CGFloat								minimumPan;
 @property (nonatomic, assign)				CGFloat								maximumPan;
-@property (nonatomic, weak)                 id<HHPanningTableViewCellDelegate>  delegate;
+@property (nonatomic, weak)            id<HHPanningTableViewCellDelegate>  delegate;
 
 - (BOOL)isDrawerRevealed;
 - (void)setDrawerRevealed:(BOOL)revealed animated:(BOOL)animated;
